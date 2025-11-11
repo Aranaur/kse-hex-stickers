@@ -90,7 +90,7 @@ sticker_object <- sticker(
 final_plot <- sticker_object + theme_sticker()
 
 ggsave(
-  "logo/stat150.png", 
+  "logo/stat150-25.png", 
   plot = final_plot,
   width = 5.9,
   height = 6.8, 
