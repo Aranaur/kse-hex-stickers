@@ -1,32 +1,17 @@
-library(ggplot2)
-library(dplyr)
-library(hexSticker)
-library(showtext)
-library(ggimage)
-library(readr)
-library(tidyr)
-library(lubridate)
+# Load necessary libraries
+library(here)
+
+source(here('main.r'))
 
 folder_name <- "logo"
+original_name <- basename(rstudioapi::getSourceEditorContext()$path)
+file_name <- sub("\\.R$", ".png", original_name)
 
-theme_sticker <- function(size=1.25, ...) {
-  center <- 1
-  radius <- 1
-  h <- radius
-  w <- sqrt(3)/2 * radius
-  m <- 1.05
-  list(
-    theme_transparent() +
-      theme(plot.margin = margin(t=0, r=0, b=0, l=0, unit = "lines"),
-            strip.text = element_blank(),
-            line = element_blank(),
-            text = element_blank(),
-            title = element_blank(), ...),
-    coord_fixed(),
-    scale_y_continuous(expand = c(0, 0), limits = c(center-h*m , center+h*m )),
-    scale_x_continuous(expand = c(0, 0), limits = c(center-w*m , center+w*m ))
-  )
+if (!dir.exists(folder_name)) {
+  dir.create(folder_name)
 }
+
+# Start creating the sticker
 
 font_add_google("Roboto Mono", "robotomono")
 showtext_auto()
@@ -69,26 +54,17 @@ sticker_object <- sticker(
   package = "MATH840",
   p_family = "robotomono",
   p_fontface = "bold",
-  p_size = 28,
+  p_size = 62,
   p_color = "#002B36",
   p_y = 1.5,
   h_fill = "#E8EEF2",
   h_color = "#586E75",
   url = "KSE@CSD | Time Series | 2025",
   u_family = "robotomono",
-  u_size = 5.5,
+  u_size = 14,
   u_color = "#586E75",
   u_x = 0.99,
   u_y = 0.07,
-)
-
-final_plot <- sticker_object + theme_sticker()
-
-ggsave(
-  paste0(folder_name, "/math840-25.png"),
-  plot = final_plot,
-  width = 5.9,
-  height = 6.8, 
-  units = "cm",
-  dpi = 300
+  filename = here(folder_name, file_name),
+  dpi = 1000
 )
