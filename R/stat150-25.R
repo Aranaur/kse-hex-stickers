@@ -1,7 +1,7 @@
 # Load necessary libraries
 library(here)
 
-source(here('main.r'))
+source(here('sticker_generator.R'))
 
 folder_name <- "logo"
 original_name <- basename(rstudioapi::getSourceEditorContext()$path)
