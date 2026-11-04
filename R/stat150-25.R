@@ -1,4 +1,4 @@
-source(here::here("sticker_generator.r"))
+source(here::here("R", "hexsticker.R"))
 
 font_add_google("Roboto Mono", "robotomono")
 showtext_auto()

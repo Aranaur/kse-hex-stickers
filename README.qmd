@@ -9,9 +9,6 @@ format: gfm
 #| message: false
 
 library(magick)
-logos <- tools::file_path_sans_ext(dir("logo", pattern = "\\.png$"))
-png <- paste0("logo/", logos, ".png")
-thumb <- paste0("thumbs/", logos, ".png")
 
 resize <- function(path_in, path_out) {
   image <- image_read(path_in)
@@ -19,25 +16,64 @@ resize <- function(path_in, path_out) {
   image_write(image, path_out)
 }
 
-outdated <- !file.exists(thumb) | file.mtime(thumb) < file.mtime(png)
-invisible(Map(resize, png[outdated], thumb[outdated]))
+# Refresh thumbs/<lang>/ for logo/<lang>/ and print a gallery table.
+gallery <- function(lang, cols = 5) {
+  logos <- tools::file_path_sans_ext(dir(file.path("logo", lang), pattern = "\\.png$"))
+  if (!length(logos)) return(invisible())
+  png <- file.path("logo", lang, paste0(logos, ".png"))
+  thumb <- file.path("thumbs", lang, paste0(logos, ".png"))
+  dir.create(file.path("thumbs", lang), showWarnings = FALSE, recursive = TRUE)
+  outdated <- !file.exists(thumb) | file.mtime(thumb) < file.mtime(png)
+  invisible(Map(resize, png[outdated], thumb[outdated]))
+
+  img <- glue::glue('<img alt="Logo for {logos}" src="{thumb}" width="120" height="139">')
+  png_link <- glue::glue('<a href="{png}">{logos}.png</a>')
+  cell <- paste0("<td>", img, "<br />", png_link, "</td>")
+  row_id <- rep(seq_len(ceiling(length(cell) / cols)), each = cols, length.out = length(cell))
+  row_cells <- split(cell, row_id)
+
+  cat("<table>\n")
+  cat(paste0("<tr>", sapply(row_cells, paste, collapse = ""), "</tr>"), sep = "")
+  cat("\n</table>\n\n")
+}
 ```
+
+## R
 
 ```{r}
-#| message: false
 #| echo: false
 #| output: asis
-img <- glue::glue('<img alt="Logo for {logos}" src="{thumb}" width="120" height="139">')
-png_link <- glue::glue('<a href="{png}">{logos}.png</a>')
-cell <- paste0("<td>", img, "<br />", png_link, "</td>")
-
-cols <- 5
-rows <- ceiling(length(cell) / cols)
-
-row_id <- rep(seq_len(rows), each = cols, length.out = length(cell))
-row_cells <- split(cell, row_id)
-
-cat("<table>\n")
-cat(paste0("<tr>", sapply(row_cells, paste, collapse = ""), "</tr>"), sep = "")
-cat("</table>\n")
+gallery("R")
 ```
+
+## Python
+
+```{r}
+#| echo: false
+#| output: asis
+gallery("python")
+```
+
+## Usage
+
+Every sticker has an R script in `R/` and an equivalent Python script in `python/`;
+the shared generators are `R/hexsticker.R` and `python/hexsticker.py`.
+They write `logo/R/<script name>.png` and `logo/python/<script name>.png` respectively
+(43.9 × 50.8 mm, the hexb.in / Posit size, at 1000 dpi).
+Render this README afterwards to refresh `thumbs/` and the galleries.
+
+**R** (packages pinned with renv):
+
+```sh
+Rscript R/math840-26.R
+```
+
+**Python** (managed with [uv](https://docs.astral.sh/uv/); the only dependency is matplotlib):
+
+```sh
+uv run python/math840-26.py
+uv run python/math840-26.py out/   # optional: write to another folder
+```
+
+The Python generator lives in `python/hexsticker.py`. Fonts are fetched from Google Fonts
+once and cached in `.cache/fonts`.

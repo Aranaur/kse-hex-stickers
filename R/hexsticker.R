@@ -11,9 +11,9 @@ library(readr)
 library(lubridate)
 library(here)
 
-## Output path for the sticker built by the calling script: logo/<script name><suffix>.png.
+## Output path for the sticker built by the calling script: logo/R/<script name><suffix>.png.
 ## Works both when the script is sourced from RStudio and when run via `Rscript R/<name>.R`.
-sticker_path <- function(suffix = "", folder = "logo") {
+sticker_path <- function(suffix = "", folder = file.path("logo", "R")) {
     file_arg <- sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE))
     script <- if (length(file_arg)) {
         file_arg[1]
@@ -22,7 +22,7 @@ sticker_path <- function(suffix = "", folder = "logo") {
     } else {
         stop("Cannot determine the script name: run it from RStudio or via Rscript.")
     }
-    dir.create(here(folder), showWarnings = FALSE)
+    dir.create(here(folder), showWarnings = FALSE, recursive = TRUE)
     here(folder, paste0(file_path_sans_ext(basename(script)), suffix, ".png"))
 }
 
