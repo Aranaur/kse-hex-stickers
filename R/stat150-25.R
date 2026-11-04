@@ -1,39 +1,22 @@
-# Load necessary libraries
-library(here)
-
-source(here('sticker_generator.R'))
-
-folder_name <- "logo"
-original_name <- basename(rstudioapi::getSourceEditorContext()$path)
-file_name <- sub("\\.R$", ".png", original_name)
-
-if (!dir.exists(folder_name)) {
-  dir.create(folder_name)
-}
-
-# Start creating the sticker
+source(here::here("sticker_generator.r"))
 
 font_add_google("Roboto Mono", "robotomono")
 showtext_auto()
 
+penguin <- file.path(tempdir(), "penguin.png")
 download.file(
   "https://drive.google.com/uc?export=download&id=1VD8bH6bFCrV_Teg9972Q8QnMV1zpW2Xb",
-  destfile = here(folder_name, "penguin.png"),
+  destfile = penguin,
   mode = "wb"
 )
 
 plot <- ggplot() +
-  scale_color_identity() +
-  scale_fill_identity() +
   theme_void() +
   coord_fixed(ratio = 1, xlim = c(-0.9, 1.9), ylim = c(-0.4, 1.5)) +
   geom_image(
-    aes(
-      x = mean(range(bg_dots$x)),
-      y = mean(range(bg_dots$y)),
-      image = "logo/penguin.png"),
+    aes(x = 0.52, y = 0.57, image = penguin),
     size = 0.95
-  ) + 
+  ) +
   theme_transparent()
 
 sticker(
@@ -54,8 +37,8 @@ sticker(
   u_color = "#786452",
   u_y = 0.075,
   u_x = 1,
-  filename = here(folder_name, file_name),
+  filename = sticker_path(),
   dpi = 1000
 )
 
-file_delete(here(folder_name, "penguin.png"))
+file_delete(penguin)

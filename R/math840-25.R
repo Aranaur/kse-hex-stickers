@@ -1,37 +1,28 @@
-# Load necessary libraries
-library(here)
-
-source(here('sticker_generator.R'))
-
-folder_name <- "logo"
-original_name <- basename(rstudioapi::getSourceEditorContext()$path)
-file_name <- sub("\\.R$", ".png", original_name)
-
-if (!dir.exists(folder_name)) {
-  dir.create(folder_name)
-}
-
+source(here::here("sticker_generator.r"))
 
 font_add_google("Roboto Mono", "robotomono")
-font_add_google("Patrick Hand", "patrick") 
 showtext_auto()
 
-electricity_df <- read_csv("https://raw.githubusercontent.com/Aranaur/aranaur.rbind.io/main/datasets/energy_ua/energy_ua_2014_2021.csv") |> 
+# ACF of monthly thermal power (TEC) generation in Ukraine, 2014-2021.
+electricity_df <- read_csv("https://raw.githubusercontent.com/Aranaur/aranaur.rbind.io/main/datasets/energy_ua/energy_ua_2014_2021.csv",
+                           show_col_types = FALSE) |>
   pivot_longer(
     cols = -time,
     names_to = "source",
     values_to = "consumption_mwh"
-  ) |> 
+  ) |>
   mutate(
     month = month(time),
     year = year(time),
   ) |>
   group_by(year, month, source) |>
-  summarise(consumption_mwh = sum(consumption_mwh, na.rm = TRUE)) |>
-  ungroup()
+  summarise(consumption_mwh = sum(consumption_mwh, na.rm = TRUE), .groups = "drop")
 
-plot_data <- electricity_df |> 
+plot_data <- electricity_df |>
   filter(source == "TEC")
+
+acf_df <- acf(plot_data$consumption_mwh, plot = FALSE, lag.max = 13) |>
+  with(data.frame(lag = drop(lag), acf = drop(acf)))
 
 gradient_line_df <- data.frame(
   x = seq(min(acf_df$lag) - 0.5, max(acf_df$lag) + 0.5, length.out = 5000),
@@ -40,43 +31,43 @@ gradient_line_df <- data.frame(
 
 horst_palette <- c("#2E5090", "#009B9F", "#5FBC63", "#C4D600")
 
-line_size <- 1.4 
+line_size <- 1.4
 offset_val <- 0.04
 
 plot <- ggplot() +
   geom_line(
-    data = gradient_line_df, 
-    aes(x = x, y = y, color = x), 
-    size = line_size, 
+    data = gradient_line_df,
+    aes(x = x, y = y, color = x),
+    linewidth = line_size,
     alpha = 0.8,
     lineend = "round"
   ) +
-  
+
   geom_segment(
     data = acf_df,
     aes(
-      x = lag, xend = lag, 
-      y = sign(acf) * offset_val, 
-      yend = acf, 
+      x = lag, xend = lag,
+      y = sign(acf) * offset_val,
+      yend = acf,
       color = lag
-    ), 
-    size = 1.2, 
+    ),
+    linewidth = 1.2,
     alpha = 0.8,
     lineend = "round"
   ) +
-  
+
   geom_point(
     data = acf_df,
-    aes(x = lag, y = acf, color = lag), 
+    aes(x = lag, y = acf, color = lag),
     size = 2.8
   ) +
-  
+
   scale_color_gradientn(colors = horst_palette) +
   theme_void() +
   theme_transparent() +
   theme(legend.position = "none")
 
-sticker_object <- sticker(
+sticker(
   subplot = plot,
   s_x = 1.0, s_y = 0.85,
   s_width = 1.6, s_height = 1.2,
@@ -98,7 +89,7 @@ sticker_object <- sticker(
   u_color = "#586E75",
   u_x = 0.99,
   u_y = 0.08,
-  
-  filename = here(folder_name, file_name),
+
+  filename = sticker_path(),
   dpi = 1000
 )

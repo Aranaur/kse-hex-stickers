@@ -6,10 +6,25 @@ library(tools)
 library(dplyr)
 library(fs)
 library(rstudioapi)
-library(dplyr)
 library(tidyr)
 library(readr)
 library(lubridate)
+library(here)
+
+## Output path for the sticker built by the calling script: logo/<script name><suffix>.png.
+## Works both when the script is sourced from RStudio and when run via `Rscript R/<name>.R`.
+sticker_path <- function(suffix = "", folder = "logo") {
+    file_arg <- sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE))
+    script <- if (length(file_arg)) {
+        file_arg[1]
+    } else if (rstudioapi::isAvailable()) {
+        rstudioapi::getSourceEditorContext()$path
+    } else {
+        stop("Cannot determine the script name: run it from RStudio or via Rscript.")
+    }
+    dir.create(here(folder), showWarnings = FALSE)
+    here(folder, paste0(file_path_sans_ext(basename(script)), suffix, ".png"))
+}
 
 sticker <- function(subplot, s_x=.8, s_y=.75, s_width=.4, s_height=.5,
                     package, p_x=1, p_y=1.4, p_color="#FFFFFF",
@@ -77,7 +92,7 @@ spotlight <- function(alpha) {
     ## set.seed(123)
     vals_x <- rnorm(500000, sd = 2, mean = 0)
     vals_y <- rnorm(500000, sd = 2, mean = 0)
-    hexbinplot(vals_x ~ vals_y, colramp = whiteTrans(alpha), colorkey = FALSE,
+    hexbin::hexbinplot(vals_x ~ vals_y, colramp = whiteTrans(alpha), colorkey = FALSE,
                bty = "n", scales = list(draw = FALSE), xlab = "", ylab = "",
                border = NA, par.settings = list(axis.line = list(col = NA)))
 }
